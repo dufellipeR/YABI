@@ -1,9 +1,9 @@
 ﻿
 using System.Text.Json.Serialization;
 
-namespace Yabi
+namespace Yabi.Models
 {
- 
+
 
     public class FearAndGreedIndex
     {
@@ -17,7 +17,7 @@ namespace Yabi
     public class Data
     {
         [JsonPropertyName("value")]
-        public string ? Value { get; set; }
+        public string? Value { get; set; }
     }
 
 
