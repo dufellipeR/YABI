@@ -1,6 +1,5 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
-using OpenQA.Selenium.Chrome;
-using OpenQA.Selenium;
 using Yabi.Models;
 
 
@@ -57,64 +56,16 @@ app.UseHttpsRedirection();
 
 */
 
+app.MapGet("/", async (YabiDb db) => await db.Yabis.OrderBy(y => y.DateTime).LastAsync());
 
-app.MapGet("/mayer", () =>
+app.MapGet("/yabi", async (IHttpClientFactory clientFactory, YabiDb db) =>
 {
-    var url = "https://buybitcoinworldwide.com/mayer-multiple/";
+    var Yabi = await YabiIndex.Build(clientFactory);
 
-    // Set up the browser
-    var options = new ChromeOptions();
-    options.AddArgument("--headless");
-    options.AddArgument("--disable-gpu");
-    options.AddArgument("--no-sandbox");
-    options.AddArgument("--disable-dev-shm-usage");
-    var driver = new ChromeDriver(options);
+    await db.AddAsync(Yabi);
+    await db.SaveChangesAsync();
 
-    var mayer = "";
-
-    try
-    {
-        
-        driver.Navigate().GoToUrl(url);
-
-        // Wait until the information is loaded, damn SPA's
-        var wait = new OpenQA.Selenium.Support.UI.WebDriverWait(driver, TimeSpan.FromSeconds(3));
-        var element = wait.Until(d => d.FindElement(By.Id("mayer-multiple")));
-        wait.Until(d => element.Text != "Loading...");
-
-        mayer = element.Text;
-        Console.WriteLine(mayer);
-    }
-    finally
-    {
-        driver.Quit();
-    }
-
-    return Results.Ok(mayer);
-});
-
-app.MapGet("/yabi", async (IHttpClientFactory clientFactory) =>
-{
-    // Yabi max score
-    const int YabiMax = 21;
-
-    var Yabi = 0;
-
-    var FngIndex = await FearAndGreedIndex.GetScore(clientFactory);
-
-    var MayerIndex = await Mayer.GetScore();
-
-    List<int> indexes = [FngIndex, MayerIndex];
-
-    // Max sum  of indexes score
-    var Max = indexes.Count * 99;
-
-    var Sum = indexes.Sum();
-
-    Yabi = YabiMax * Sum / Max;
-
-
-    return Results.Ok(Yabi);
-});
+    return Results.Created("OK", Yabi);
+}); 
 
 app.Run();
