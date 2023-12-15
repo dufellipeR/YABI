@@ -1,6 +1,6 @@
 @Yabi_HostAddress = http://localhost:5259
 
-GET {{Yabi_HostAddress}}/weatherforecast/
+GET {{Yabi_HostAddress}}/yabi/
 Accept: application/json
 
 ###

@@ -5,7 +5,11 @@ namespace Yabi.Models
 {
     public class Mayer
     {
-        // Simulations determined that in the past, the best long-term result were achieved by accumulating Bitcoin whenever the Mayer Multiple was below 2.4.
+        /* 
+         * Simulations determined that in the past, the best long-term result
+         * were achieved by accumulating Bitcoin
+         * whenever the Mayer Multiple was below 2.4.
+        */
         const double TOP = 2.4;
         public static async Task<string> GetData()
         {
