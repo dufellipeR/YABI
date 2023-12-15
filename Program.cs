@@ -1,10 +1,11 @@
 using Microsoft.OpenApi.Models;
-using System.Text.Json;
-using Yabi.Models;
 using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium;
+using Yabi.Models;
+
 
 var builder = WebApplication.CreateBuilder(args);
+var connectionString = builder.Configuration.GetConnectionString("Yabi") ?? "Data Source=Yabi.db";
 
 
 builder.Services.AddEndpointsApiExplorer();
@@ -18,10 +19,10 @@ builder.Services.AddSwaggerGen(c =>
         Version = "v1"
     });
 });
+builder.Services.AddSqlite<YabiDb>(connectionString);
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -56,31 +57,8 @@ app.UseHttpsRedirection();
 
 */
 
-app.MapGet("/fng", async (IHttpClientFactory clientFactory) =>
-{
-    var client = clientFactory.CreateClient();
-    var response = await client.GetAsync("https://api.alternative.me/fng/");
 
-    if (response.IsSuccessStatusCode)
-    {
-        var SerializerOptions = new JsonSerializerOptions() { };
-        var json = await response.Content.ReadAsStringAsync();
-
-        FearAndGreedIndex? fearAndGreedIndex = JsonSerializer.Deserialize<FearAndGreedIndex>(json);
-
-        Console.WriteLine(fearAndGreedIndex?.Data?[0].Value);
-
-        return Results.Ok(fearAndGreedIndex); 
-   
-    }
-    else
-    {
-        return Results.StatusCode((int)response.StatusCode);
-    }
-});
-
-
-app.MapGet("/mayer", async (IHttpClientFactory clientFactory) =>
+app.MapGet("/mayer", () =>
 {
     var url = "https://buybitcoinworldwide.com/mayer-multiple/";
 
@@ -96,31 +74,47 @@ app.MapGet("/mayer", async (IHttpClientFactory clientFactory) =>
 
     try
     {
-        // Load the website
+        
         driver.Navigate().GoToUrl(url);
 
-        // Wait until the information is loaded
+        // Wait until the information is loaded, damn SPA's
         var wait = new OpenQA.Selenium.Support.UI.WebDriverWait(driver, TimeSpan.FromSeconds(3));
         var element = wait.Until(d => d.FindElement(By.Id("mayer-multiple")));
         wait.Until(d => element.Text != "Loading...");
 
-        // Scrape the information
         mayer = element.Text;
         Console.WriteLine(mayer);
     }
     finally
     {
-        // Close the browser
         driver.Quit();
     }
 
     return Results.Ok(mayer);
 });
 
-app.MapGet("/rsi", async (IHttpClientFactory clientFactory) =>
+app.MapGet("/yabi", async (IHttpClientFactory clientFactory) =>
 {
+    // Yabi max score
+    const int YabiMax = 21;
 
-    return Results.Ok();
+    var Yabi = 0;
+
+    var FngIndex = await FearAndGreedIndex.GetScore(clientFactory);
+
+    var MayerIndex = await Mayer.GetScore();
+
+    List<int> indexes = [FngIndex, MayerIndex];
+
+    // Max sum  of indexes score
+    var Max = indexes.Count * 99;
+
+    var Sum = indexes.Sum();
+
+    Yabi = YabiMax * Sum / Max;
+
+
+    return Results.Ok(Yabi);
 });
 
 app.Run();
