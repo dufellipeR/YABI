@@ -2,6 +2,16 @@
 
 namespace Yabi.Models
 {
+    public class YabiDb : DbContext
+    {
+        public YabiDb()
+        {
+        }
+
+        public YabiDb(DbContextOptions options) : base(options) { }
+        public DbSet<YabiIndex> Yabis { get; set; } = null!;
+    }
+
     public class YabiIndex
     {
 
@@ -10,7 +20,7 @@ namespace Yabi.Models
         public DateTime DateTime { get; set; }
         public int? Index { get; set; }
 
-        public static async Task<YabiIndex> Build (IHttpClientFactory clientFactory)
+        public static async Task<YabiIndex> Build(IHttpClientFactory clientFactory, YabiDb db)
         {
             // Yabi max score
             const int YabiMax = 21;
@@ -36,14 +46,15 @@ namespace Yabi.Models
                 Index = YabiMax * Sum / Max
             };
 
+            await db.AddAsync(Yabi);
+            await db.SaveChangesAsync();
+
+            Console.WriteLine("Created Index");
+
             return Yabi;
         }
     }
 
 
-    class YabiDb : DbContext
-    {
-        public YabiDb(DbContextOptions options) : base(options) { }
-        public DbSet<YabiIndex> Yabis { get; set; } = null!;
-    }
+
 }
