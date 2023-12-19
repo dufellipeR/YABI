@@ -30,6 +30,7 @@
 ## Future Work
 - Integrate Cache
 - Add more indexes
+- Safety measures
 - Create a client
 - Deploy
 
